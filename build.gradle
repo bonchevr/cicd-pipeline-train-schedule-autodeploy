@@ -1,18 +1,19 @@
+// Plugins section remains the same
 plugins {
-  //inlude the nodeJS plugin to execute nodejs and npm tasks
   id "com.moowork.node" version "1.2.0"
 }
 
+// Node plugin configuration
 node {
 	download = true
 	version = "9.11.1"
 	npmVersion = "5.6.0"
 }
 
-//declare a build task
+// Define a build task, though this can be empty
 task build
 
-//declare a task to create a zip of the app
+// Task to create a zip of the app
 task zip(type: Zip) {
 	from ('.') {
 		include "*"
@@ -27,9 +28,5 @@ task zip(type: Zip) {
 	baseName "trainSchedule"
 }
 
-//declare task dependencies
+// Task dependencies
 build.dependsOn zip
-zip.dependsOn npm_build
-npm_build.dependsOn npm_test
-npm_test.dependsOn npmInstall
-npm_build.dependsOn npmInstall
