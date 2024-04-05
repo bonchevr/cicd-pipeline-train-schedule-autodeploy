@@ -4,7 +4,6 @@ pipeline {
         DOCKER_IMAGE_NAME = "bonchevr/train-schedule"
         CANARY_REPLICAS = 0
         KUBE_CONFIG = credentials('kubeconfig') // Assuming you've set up Kubernetes credentials in Jenkins
-        KUBE_NAMESPACE = 'your-namespace'
     }
     stages {
         stage('Build') {
@@ -49,7 +48,7 @@ pipeline {
             }
             steps {
                 script {
-                    sh "kubectl apply -f train-schedule-kube-canary.yml --kubeconfig=${KUBE_CONFIG} -n ${KUBE_NAMESPACE}"
+                    sh "kubectl apply -f train-schedule-kube-canary.yml --kubeconfig=${KUBE_CONFIG}"
                 }
             }
         }
@@ -77,7 +76,7 @@ pipeline {
             steps {
                 milestone(1)
                 script {
-                    sh "kubectl apply -f train-schedule-kube.yml --kubeconfig=${KUBE_CONFIG} -n ${KUBE_NAMESPACE}"
+                    sh "kubectl apply -f train-schedule-kube.yml --kubeconfig=${KUBE_CONFIG}"
                 }
             }
         }
@@ -85,7 +84,7 @@ pipeline {
     post {
         cleanup {
             script {
-                sh "kubectl delete -f train-schedule-kube-canary.yml --kubeconfig=${KUBE_CONFIG} -n ${KUBE_NAMESPACE}"
+                sh "kubectl delete -f train-schedule-kube-canary.yml --kubeconfig=${KUBE_CONFIG}"
             }
         }
     }
