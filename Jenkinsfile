@@ -3,6 +3,8 @@ pipeline {
     environment {
         DOCKER_IMAGE_NAME = "bonchevr/train-schedule"
         CANARY_REPLICAS = 0
+        KUBE_CONFIG = credentials('kubeconfig') // Assuming you've set up Kubernetes credentials in Jenkins
+        KUBE_NAMESPACE = 'your-namespace'
     }
     stages {
         stage('Build') {
@@ -42,15 +44,13 @@ pipeline {
             when {
                 branch 'master'
             }
-            environment { 
+            environment {
                 CANARY_REPLICAS = 1
             }
             steps {
-                kubernetesDeploy(
-                    kubeconfigId: 'kubeconfig',
-                    configs: 'train-schedule-kube-canary.yml',
-                    enableConfigSubstitution: true
-                )
+                script {
+                    sh "kubectl apply -f train-schedule-kube-canary.yml --kubeconfig=${KUBE_CONFIG} -n ${KUBE_NAMESPACE}"
+                }
             }
         }
         stage('SmokeTest') {
@@ -59,8 +59,8 @@ pipeline {
             }
             steps {
                 script {
-                    sleep (time: 5)
-                    def response = httpRequest (
+                    sleep(time: 5)
+                    def response = httpRequest(
                         url: "http://$KUBE_MASTER_IP:8081/",
                         timeout: 30
                     )
@@ -76,21 +76,17 @@ pipeline {
             }
             steps {
                 milestone(1)
-                kubernetesDeploy(
-                    kubeconfigId: 'kubeconfig',
-                    configs: 'train-schedule-kube.yml',
-                    enableConfigSubstitution: true
-                )
+                script {
+                    sh "kubectl apply -f train-schedule-kube.yml --kubeconfig=${KUBE_CONFIG} -n ${KUBE_NAMESPACE}"
+                }
             }
         }
     }
     post {
         cleanup {
-            kubernetesDeploy (
-                kubeconfigId: 'kubeconfig',
-                configs: 'train-schedule-kube-canary.yml',
-                enableConfigSubstitution: true
-            )
+            script {
+                sh "kubectl delete -f train-schedule-kube-canary.yml --kubeconfig=${KUBE_CONFIG} -n ${KUBE_NAMESPACE}"
+            }
         }
     }
 }
